@@ -1,0 +1,13 @@
+#looking at total population vs vaccinations
+
+SELECT deaths.continent, deaths.location, deaths.date, deaths.population, deaths.new_vaccinations, SUM(cast(vac.new_vaccinations as int)) OVER (PARTITION BY deaths.location order by deaths.location, deaths.date) as TotalVaccinations
+FROM
+  `inner-rhythm-405316.Covid19_Data.Covid Vaccinations` vac
+JOIN
+  `inner-rhythm-405316.Covid19_Data.Covid Deaths` deaths
+  ON
+    deaths.location = vac.location and
+    deaths.date = vac.date
+WHERE deaths.continent is not null
+and deaths.new_vaccinations is not null
+order by 2,3
