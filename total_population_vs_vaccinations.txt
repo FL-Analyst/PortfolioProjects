@@ -11,3 +11,96 @@ JOIN
 WHERE deaths.continent is not null
 and deaths.new_vaccinations is not null
 order by 2,3
+
+
+
+#gobal numbers
+
+SELECT SUM(new_cases) as TotalCases, SUM(cast (new_deaths as int)) as TotalDeaths, SUM(cast(new_deaths as int))/SUM(new_cases)*100 as DeathPercentage
+FROM
+`inner-rhythm-405316.Covid19_Data.Covid Deaths`
+WHERE continent is not null 
+order by 1, 2
+
+
+
+#total deaths vs population
+#shows what percentage of population contracted Covid-19
+SELECT location, date, population, new_cases, (total_deaths/population)*100 as death_percentage
+FROM
+`inner-rhythm-405316.Covid19_Data.Covid Deaths`
+WHERE location = 'United States'
+order by 1, 2
+
+
+
+#Total Cases vs Total Deaths
+#Shows likelihood of dying if you contract covid in your country
+
+Select Location, date, total_cases,total_deaths, (total_deaths/total_cases)*100 as DeathPercentage
+From `inner-rhythm-405316.Covid19_Data.Covid Deaths`
+where continent is not null 
+order by 1,2
+
+
+
+#looking at countries with highest infection rates compared to population
+
+SELECT
+  location,
+  population,
+  MAX(total_cases) as highest_infection_count,
+  MAX(total_cases / population) * 100 as PercentPopulationInfected
+FROM
+  `inner-rhythm-405316.Covid19_Data.Covid Deaths`
+GROUP BY
+  location, population
+ORDER BY
+  PercentPopulationInfected 
+
+
+
+#Countries with Highest Death Count per Population
+
+Select Location, MAX(cast(Total_deaths as int)) as TotalDeathCount
+From `inner-rhythm-405316.Covid19_Data.Covid Deaths`
+Where continent is not null 
+Group by Location
+order by TotalDeathCount desc
+
+
+
+#looking at highest death count per continent
+
+SELECT
+  location, MAX(cast(total_deaths as int)) as TotalDeathCount
+FROM
+  `inner-rhythm-405316.Covid19_Data.Covid Deaths`
+WHERE 
+  continent is null
+GROUP BY
+  location
+ORDER BY
+  TotalDeathCount desc
+
+
+
+#Percent of population vaccinated
+
+SELECT
+  dea.continent,
+  dea.location,
+  dea.date,
+  dea.population,
+  vac.new_vaccinations,
+  SUM(vac.new_vaccinations) OVER (PARTITION BY dea.location ORDER BY dea.location, dea.date) AS RollingPeopleVaccinated,
+  (SUM(vac.new_vaccinations) OVER (PARTITION BY dea.location ORDER BY dea.location, dea.date) / dea.population) * 100 AS PercentagePopulationVaccinated
+FROM
+  `inner-rhythm-405316.Covid19_Data.Covid Deaths` dea
+JOIN
+  `inner-rhythm-405316.Covid19_Data.Covid Vaccinations` vac
+ON
+  dea.location = vac.location
+  AND dea.date = vac.date
+WHERE
+  dea.continent IS NOT NULL
